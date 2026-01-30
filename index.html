@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mystery Numbers...</title>
+    <title>Random Number Display</title>
     <style>
         body {
             margin: 0;
@@ -31,12 +31,23 @@
         // USER CONFIGURATION
         // ========================================
         const CONFIG = {
-            minNumber: 100,           // Minimum random number
+            minNumber: 10,           // Minimum random number
             maxNumber: 10000,          // Maximum random number
             intervalMs: 500,         // Time between number changes (in milliseconds)
             fontSize: '400px',       // Font size of the number
             textColor: 'white',      // Color of the text
-            backgroundColor: 'black' // Background color
+            backgroundColor: 'black', // Background color
+            
+            // PATTERN SETTINGS
+            // Options: 'random', 'addition', 'subtraction', 'multiplication', 'mixed'
+            pattern: 'multiplication',       // Choose which pattern to display
+            
+            // Settings for each pattern type
+            additionRange: [1, 50],      // Range for numbers to add [min, max]
+            subtractionRange: [1, 50],   // Range for numbers to subtract [min, max]
+            multiplicationRange: [2, 50], // Range for multiplication [min, max]
+            
+            showEquation: false      // Set to true to show the equation instead of just the answer
         };
         // ========================================
 
@@ -51,10 +62,54 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
-        // Function to update the displayed number
+        // Function to generate and display number based on pattern
         function updateNumber() {
-            const randomNum = getRandomNumber(CONFIG.minNumber, CONFIG.maxNumber);
-            numberElement.textContent = randomNum;
+            let baseNum = getRandomNumber(CONFIG.minNumber, CONFIG.maxNumber);
+            let display = baseNum;
+            let result = baseNum;
+            
+            // Determine which pattern to use
+            let currentPattern = CONFIG.pattern;
+            if (currentPattern === 'mixed') {
+                const patterns = ['addition', 'subtraction', 'multiplication'];
+                currentPattern = patterns[Math.floor(Math.random() * patterns.length)];
+            }
+            
+            // Apply the pattern
+            if (currentPattern === 'addition') {
+                const addNum = getRandomNumber(CONFIG.additionRange[0], CONFIG.additionRange[1]);
+                result = baseNum + addNum;
+                display = CONFIG.showEquation ? `${baseNum} + ${addNum}` : result;
+            } 
+            else if (currentPattern === 'subtraction') {
+                const subNum = getRandomNumber(CONFIG.subtractionRange[0], CONFIG.subtractionRange[1]);
+                // Ensure result stays within bounds
+                result = baseNum - subNum;
+                if (result < CONFIG.minNumber) {
+                    // Adjust if result would be too small
+                    result = baseNum;
+                    display = CONFIG.showEquation ? baseNum : result;
+                } else {
+                    display = CONFIG.showEquation ? `${baseNum} - ${subNum}` : result;
+                }
+            } 
+            else if (currentPattern === 'multiplication') {
+                const multNum = getRandomNumber(CONFIG.multiplicationRange[0], CONFIG.multiplicationRange[1]);
+                result = baseNum * multNum;
+                // Check if result exceeds max, if so just use base number
+                if (result > CONFIG.maxNumber) {
+                    // Use a smaller base number
+                    baseNum = getRandomNumber(CONFIG.minNumber, Math.floor(CONFIG.maxNumber / multNum));
+                    result = baseNum * multNum;
+                }
+                display = CONFIG.showEquation ? `${baseNum} × ${multNum}` : result;
+            }
+            else {
+                // 'random' - just display the base number
+                display = result;
+            }
+            
+            numberElement.textContent = display;
         }
 
         // Initial display
